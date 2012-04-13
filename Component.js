@@ -1,3 +1,13 @@
+/**
+ * @class framework.Component
+ * The core class which all components extend from.
+ * 
+ * @mixins $JSKK.trait.Configurable
+ * @abstract
+ * 
+ * @uses framework.RadioTower
+ * @uses frmaework.StateMgr
+ */
 $JSKK.Class.create
 (
 	{
@@ -12,33 +22,171 @@ $JSKK.Class.create
 (
 	{},
 	{
+		/**
+		 * @cfg config Configuration properties.
+		 * @cfg config.attachTo The DOM element that this component will attach itself to. (required)
+		 */
 		config:
 		{
 			attachTo:	null
 		},
+		/**
+		 * @property browser Contains browser information.
+		 * @property browser.name The name of the browser.
+		 * @property browser.version The version of the browser.
+		 * @readonly
+		 */
         browser:
 		{
 			name:		null,
 			version:	null
 		},
+		/**
+		 * @property components Specifiy a list of child components.
+		 * 
+	$JSKK.Class.create
+	(
+		{
+			$namespace:	'Application.component',
+			$name:		'MyComponent',
+			$extends:	framework.Component
+		}
+	)
+	(
+		{},
+		{
+			components:
+			{
+				loginForm:		'Application.component.LoginForm',
+				errorWindow:	'Application.component.DialogWindow',
+				successWindow:	'Application.component.DialogWindow'
+			}
+		}
+	);
+		 * 
+		 */
 		components:		{},
+		/**
+		 * @property models Specify a list of models to pre-load.
+		 * 
+	$JSKK.Class.create
+	(
+		{
+			$namespace:	'Application.component',
+			$name:		'MyComponent',
+			$extends:	framework.Component
+		}
+	)
+	(
+		{},
+		{
+			models:
+			[
+				'State',
+				'User'
+			]
+		}
+	);
+		 */
 		models:			[],
+		/**
+		 * @property views Specify a list of views to pre-load.
+		 * 
+	$JSKK.Class.create
+	(
+		{
+			$namespace:	'Application.component',
+			$name:		'MyComponent',
+			$extends:	framework.Component
+		}
+	)
+	(
+		{},
+		{
+			views:
+			[
+				'Default'
+			]
+		}
+	);
+		 */
 		views:			[],
+		/**
+		 * @property controllers Specify a list of controllers to pre-load.
+		 * 
+	$JSKK.Class.create
+	(
+		{
+			$namespace:	'Application.component',
+			$name:		'MyComponent',
+			$extends:	framework.Component
+		}
+	)
+	(
+		{},
+		{
+			controllers:
+			[
+				'State',
+				'Default'
+			]
+		}
+	);
+		 */
 		controllers:	[],
+		/**
+		 * @property _models A container for all the initialized models.
+		 * @private
+		 */
 		_models:		{},
+		/**
+		 * @property _views A container for all the initialized views.
+		 * @private
+		 */
 		_views:			{},
+		/**
+		 * @property _controllers A container for all the initialized controllers.
+		 * @private
+		 */
 		_controllers:	{},
+		/**
+		 * @property _configured A flag to indicate weather or not this component has been configured.
+		 * @private
+		 */
 		_configured:	false,
+		/**
+		 * @property my A special object containing information relevant to this class.
+		 * @property my.name The name of this class.
+		 * @property my.index The position this component lives in within the stack of 
+		 * components registered against the framework.
+		 * @property my.NSObject The namespace in an object format of this class.
+		 */
 		my:
 		{
 			name:		null,
 			index:		null,
 			NSObject:	null
 		},
+		
+		/**
+		 * @property radioTower A reference to the {@link framework.RadioTower Radio Tower}. 
+		 * @private
+		 */
 		radioTower: null,
 		stateMgr:	null,
 		/**
+		 * @constructor
+		 * Sets up the component by initalizing all it's child components,
+		 * views, models and controllers.
 		 * 
+		 * Additionally, it connects the component to the Radio Tower,
+		 * enabling signals, and the State Manager, enabling state to be
+		 * captured/restored.
+		 * 
+		 * Note: The constructor automatically calls {@link framework.Component#reconfigure reconfigure}
+		 * when it is done.
+		 * 
+		 * @return {framework.Component}
 		 */
         init: function()
 		{
@@ -75,6 +223,13 @@ $JSKK.Class.create
 			this.ready=true;
 			this.reconfigure();
 		},
+		/**
+		 * Initalizes the component's conneciton to the Radio Tower.
+		 * 
+		 * The Radio Tower enables signals to flow through this component.
+		 * 
+		 * @return void
+		 */
 		initRadioTower: function()
 		{
 			if (Object.isUndefined(window.framework.$radioTower))
@@ -83,6 +238,11 @@ $JSKK.Class.create
 			}
 			this.radioTower=window.framework.$radioTower;
 		},
+		/**
+		 * Initalizes the component's connection to the State Manager.
+		 * 
+		 * The State Manager
+		 */
 		initStateMgr: function()
 		{
 			if (Object.isUndefined(window.framework.$stateMgr))
@@ -91,6 +251,10 @@ $JSKK.Class.create
 			}
 			this.stateMgr=window.framework.$stateMgr;
 		},
+		/**
+		 * Gets the browser info. Note that this is currently tied to jQuery.
+		 * @private
+		 */
 		getBrowser: function()
 		{
 			if (Object.isNull(this.browser.name))
@@ -115,6 +279,9 @@ $JSKK.Class.create
 				this.browser.version=jQuery.browser.version.split('.')[0];
 			}
 		},
+		/**
+		 * @private
+		 */
 		initChildComponents: function()
 		{
 			var parts		=null,
@@ -147,6 +314,9 @@ $JSKK.Class.create
 				this.components[component]=new object();
 			}
 		},
+		/**
+		 * 
+		 */
 		getCmp: function(cmpName)
 		{
 			if (Object.isDefined(this.components[cmpName]))
@@ -158,6 +328,10 @@ $JSKK.Class.create
 				throw new Error('Unable to get component "'+cmpName+'". This component has not been registered.');
 			}
 		},
+		/**
+		 * 
+		 * @private
+		 */
 		initControllers: function()
 		{
 			for (var i=0,j=this.controllers.length; i<j; i++)
@@ -173,6 +347,10 @@ $JSKK.Class.create
 				}
 			}
 		},
+		/**
+		 * 
+		 * @private
+		 */
 		initViews: function()
 		{
 			for (var i=0,j=this.views.length; i<j; i++)
@@ -189,6 +367,9 @@ $JSKK.Class.create
 				}
 			}
 		},
+		/**
+		 * 
+		 */
 		getView: function(view)
 		{
 			if (Object.isDefined(this._views[view]))
@@ -200,6 +381,10 @@ $JSKK.Class.create
 				throw new Error('Error - view "'+view+'" has not been initilized.');
 			}
 		},
+		/**
+		 * 
+		 * @private
+		 */
 		initModels: function()
 		{
 			for (var i=0,j=this.models.length; i<j; i++)
@@ -216,6 +401,9 @@ $JSKK.Class.create
 				}
 			}
 		},
+		/**
+		 * 
+		 */
 		getModel: function(model)
 		{
 			if (Object.isDefined(this._models[model]))
@@ -227,6 +415,9 @@ $JSKK.Class.create
 				throw new Error('Error - model "'+model+'" has not been initilized.');
 			}
 		},
+		/**
+		 * 
+		 */
 		configure: function(newConfig)
 		{
 			$JSKK.when(this,'ready').isTrue
@@ -246,6 +437,13 @@ $JSKK.Class.create
 				}.bind(this)
 			);
 		},
+		/**
+		 * Call this method to force the component to reconfigure itself.
+		 * 
+		 * This essentially calls the {@link }
+		 * 
+		 * @return void
+		 */
 		reconfigure: function()
 		{
 			$JSKK.when(this,'ready').isTrue
@@ -256,10 +454,19 @@ $JSKK.Class.create
 				}.bind(this)
 			);
 		},
+		/**
+		 * 
+		 * @return {Boolean} true if this component has been configured.
+		 */
 		isConfigured: function()
 		{
 			return this._configured;
 		},
+		/**
+		 * Fetches a config item associated with this component.
+		 * 
+		 * @return {Mixed} The config item's value. 
+		 */
 		getConfig:		function(key)
 		{
 			var	parts	=key.split('.'),
@@ -277,6 +484,13 @@ $JSKK.Class.create
 			}
 			return object;
 		},
+		/**
+		 * Calculates the ID of this component based off of
+		 * its namespace and name.
+		 * 
+		 * @return {String} The ID of this component or the M/V/C class
+		 * associated with this component.
+		 */
 		getID: function()
 		{
 			var id=[];
@@ -285,7 +499,8 @@ $JSKK.Class.create
 			return id.join('.');
 		},
 		/**
-		 * 
+		 * See {@link framework.trait.signal.Send#sendSignal}
+		 * @private
 		 */
 		sendSignal: function(name,body,type,filter)
 		{
@@ -317,33 +532,5 @@ $JSKK.Class.create
 				throw new Error('Class '+this.className+' attempted to fire an empty signal.');
 			}
 		}
-		
-		/**
-		 * 
-		 */
-//		registerSignal: function(signal,callback)
-//		{
-//			this.observe(signal,callback);
-//		},
-//		destroyController: function(signal)
-//		{
-//			var controller=signal.getBody().name;
-//			
-//			console.debug('destroyController ',controller);
-//			
-//			
-//			if (Object.isDefined(this.controllers[controller]))
-//			{
-//				delete this.controllers[controller];
-//			}
-//			else
-//			{
-//				throw new Error('Call to destroyController on controller "'+controller+'" failed because the controller has not been initilized or has already been destroyed.');
-//			}
-//		},
-//		onCommandComplete: function(signal)
-//		{console.debug('onCommandComplete');
-//			this.destroyController(signal);
-//		}
 	}
 );
