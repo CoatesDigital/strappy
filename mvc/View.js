@@ -1,3 +1,17 @@
+/**
+ * @class framework.mvc.View
+ * 
+ * 
+ * 
+ * @mixins framework.trait.ComponentConnector
+ * @mixins framework.trait.signal.Receive
+ * @mixins framework.trait.signal.Send
+ * @abstract
+ * 
+ * @uses framework.trait.ComponentConnector
+ * @uses framework.trait.signal.Receive
+ * @uses framework.trait.signal.Send
+ */
 $JSKK.Class.create
 (
 	{
@@ -14,9 +28,7 @@ $JSKK.Class.create
 (
 	{},
 	{
-        /*
-        * INSTANCE VARIABLES
-        */
+		
         _iid:			null,
 		_ready:			false,
 		_stateBindings:	{},
@@ -27,7 +39,9 @@ $JSKK.Class.create
         // children: [],
 
         /**
-        * INITIALIZATION
+        * @constructor
+        * 
+        * 
         */
 		init: function()
 		{

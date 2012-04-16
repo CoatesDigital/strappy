@@ -1,3 +1,15 @@
+/**
+ * @class framework.mvc.Model
+ * 
+ * 
+ * 
+ * @mixins framework.trait.ComponentConnector
+ * @mixins framework.trait.signal.Send
+ * @abstract
+ * 
+ * @uses framework.trait.ComponentConnector
+ * @uses framework.trait.signal.Send
+ */
 $JSKK.Class.create
 (
 	{

@@ -1,24 +1,58 @@
-$JSKK.Trait.create
+/**
+ * @class framework.trait.signal.Receive
+ * This trait enables a {@link framework.mvc.Model model},
+ * {@link framework.mvc.View view} or {@link framework.mvc.Controller controller}
+ * with the ability to register and receive signals.
+ * 
+ * @abstract
+ */
+ $JSKK.Trait.create
 (
 	{
 		$namespace:	'framework.trait.signal',
-		$name:		'Receive',
-		$implements:
-		[
-			framework.iface.Signal
-		]
+		$name:		'Receive'
 	}
 )
 (
 	{
-        /*
-        * TODO: Needed? If not delete
-            registerSignal: function(signal,callback)
-            {
-                this.getCore().observe(signal,callback);
-            },
-        */
-
+		/**
+		 * Registers signals that the class implementing this trait will
+		 * listen for and binds them to callbacks within the class.
+		 * 
+		 * Example:
+	$JSKK.Class.create
+	(
+		{
+			$namespace:	'Application.component.myComponent.controller',
+			$name:		'Default',
+			$extends:	framework.mvc.Controller
+		}
+	)
+	(
+		{},
+		{
+			onReadyState: function()
+			{
+				this.registerSignals
+				(
+					[Application.component.MyComponent.SIGNAL.LOGIN_SUCCESS,'onLoginSuccess'],
+					[Application.component.MyComponent.SIGNAL.LOGIN_FAILURE,'onLoginFailure']
+				);
+			},
+			onLoginSuccess: function(signal)
+			{
+				//Do somthing here...
+			},
+			onLoginFailure: function(signal)
+			{
+				//Do somthing here...
+			}
+		}
+	);
+		 * 
+		 * @param {Array} signals The signals to register.
+		 * @throws Error if the callback to bind to does not exist.
+		 */
 		registerSignals: function()
 		{
 			var	signals=$JSKK.toArray(arguments);
