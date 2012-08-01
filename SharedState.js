@@ -3,12 +3,6 @@
  * 
  * 
  * 
- * @mixins strappy.trait.ComponentConnector
- * @mixins strappy.trait.signal.Send
- * @abstract
- * 
- * @uses strappy.trait.ComponentConnector
- * @uses strappy.trait.signal.Send
  */
 $JSKK.Class.create
 (

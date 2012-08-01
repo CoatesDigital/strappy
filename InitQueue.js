@@ -1,3 +1,11 @@
+/**
+ * @class strappy.InitQueue
+ * 
+ * 
+ * 
+ * @mixin $JSKK.trait.Observable
+ * @uses $JSKK.trait.Observable
+ */
 $JSKK.Class.create
 (
 	{
