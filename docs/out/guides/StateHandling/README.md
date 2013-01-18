@@ -62,7 +62,7 @@ A typical example of flagging a store as ready:
 	$JSKK.Class.create
 	(
 		{
-			$namespace:	'Coates.component.application.controller',
+			$namespace:	'Switchboard.component.application.controller',
 			$name:		'State',
 			$extends:	framework.mvc.stateful.Controller
 		}
@@ -101,7 +101,7 @@ Example State Store:
 	$JSKK.Class.create
 	(
 		{
-			$namespace:	'Coates.component.application.store',
+			$namespace:	'Switchboard.component.application.store',
 			$name:		'State',
 			$extends:	framework.data.stateful.Store
 		}

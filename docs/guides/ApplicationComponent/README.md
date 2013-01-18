@@ -264,13 +264,13 @@ Generally this is where you connect to any APIs (such as your backend's BTL API)
 			 */
 			onReady: function()
 			{
-				this.shareMgr=new strappy.ShareMgr(this,Coates);
+				this.shareMgr=new strappy.ShareMgr(this,Switchboard);
 				this.getStore('State').set('mainReady',true);
 				this.fireEvent('onReady',this);
 				
 				this.getView('Structure').show();
 				
-				Coates.API.user.get
+				Switchboard.API.user.get
 				(
 					null,
 					{_current:true},
@@ -305,12 +305,12 @@ Generally this is where you connect to any APIs (such as your backend's BTL API)
 						this.getCmp('LoginPanel'),
 						{
 							attachTo:			'#'+this.getIID(),
-							containerClass:		'coates-local-container',
+							containerClass:		'switchboard-local-container',
 							relativeWrapper:	true,
 							children:
 							[
 								{
-									cmp:	Coates.component.Login,
+									cmp:	Switchboard.component.Login,
 									ref:	'login',
 									config:
 									{
