@@ -96,7 +96,7 @@ $JSKK.Class.create
 			
 			for (var template in this.templates)
 			{
-				var requestPath	=(this.$reflect('namespace').replace(/\./g,'/'))+'/html/'+this.templates[template];
+				var requestPath	=('/' + this.$reflect('namespace').replace(/\./g,'/'))+'/html/'+this.templates[template];
 				if (!this.getViewCache().exists(requestPath)
 				|| this.getViewCache().isFetching(requestPath))
 				{
