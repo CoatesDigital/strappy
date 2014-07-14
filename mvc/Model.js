@@ -77,14 +77,14 @@ $JSKK.Class.create
 		 */
 		init: function(record)
 		{
-			if (Object.isDefined(record))
+			if (Object.isDefined(record) && !Object.isNull(record))
 			{
 				this.record=Object.clone(this.fields);
 				for (var field in this.fields)
 				{
 					if (Object.isDefined(record[field]))
 					{
-						this.record[field]=record[field];
+						this.record[field]=Object.clone(record[field]);
 					}
 				}
 			}
@@ -92,7 +92,7 @@ $JSKK.Class.create
 			{
 				for (var field in this.fields)
 				{
-					this.record[field]=this.fields[field];
+					this.record[field]=Object.clone(this.fields[field]);
 				}
 			}
 		},
@@ -119,6 +119,49 @@ $JSKK.Class.create
 		{
 			return this.store;
 		},
+		BTLSync: function()
+		{
+			var	store	=this.getStore(),
+				target	=(store.isShared()?store.getShared():store);
+			target.BTL.startQueue();
+			if (this.isDirty())
+			{
+				target.BTL_SET
+				(
+					this.getRecord(),
+					null,
+					function(response)
+					{
+						var record=response.data;
+						this.lock(strappy.mvc.Model.LOCK_NONE,true);
+						this.set(record[0]);
+						this.flagClean();
+						this.fireEvent('onSync',this,record);
+						this.fireEvent('onChange',this,record);
+					}.bind(this)
+				);
+			}
+			else
+			{
+				var query={};
+				query[this.idField]=this.getId();
+				target.BTL_GET
+				(
+					null,
+					query,
+					function(response)
+					{
+						var record=response.data;
+						this.lock(strappy.mvc.Model.LOCK_NONE,true);
+						this.set(record[0]);
+						this.flagClean();
+						this.fireEvent('onSync',this,record);
+						this.fireEvent('onChange',this,record);
+					}.bind(this)
+				);
+			}
+			target.BTL.executeQueue();
+		},
 		/**
 		 * This method will attach any changes to a
 		 * proxy sync request.
@@ -132,7 +175,6 @@ $JSKK.Class.create
 		sync: function(config)
 		{
 			var proxy=this.getStore().getProxy();
-			
 			if (Object.isFunction(proxy.sync))
 			{
 				proxy.sync
@@ -189,7 +231,7 @@ $JSKK.Class.create
 			return this;
 		},
 		/**
-		 * Fetches a record based on its index in the store.
+		 * Fetches a value based on a field name.
 		 * 
 		 * Note: This method is affected by lock state.
 		 * 
@@ -198,16 +240,20 @@ $JSKK.Class.create
 		 */
         get: function(key)
 		{
-			if (this.lockState==strappy.mvc.Model.LOCK_NONE
-			|| this.lockState==strappy.mvc.Model.LOCK_READONLY
-			|| this.isClone())
-			{
-				return this.record[key];
-			}
-			else
-			{
-				throw new Error('The model "'+this.$reflect('namespace')+'.'+this.$reflect('name')+'" is in a lock state that prevents reading.');
-			}
+			return this.record[key];
+			
+			
+			// if (this.lockState==strappy.mvc.Model.LOCK_NONE
+			// || this.lockState==strappy.mvc.Model.LOCK_READONLY
+			// || this.isClone())
+			// {
+			// 	return this.record[key];
+			// }
+			// else
+			// {
+			// 	console.trace();
+			// 	throw new Error('The model "'+this.$reflect('namespace')+'.'+this.$reflect('name')+'" is in a lock state that prevents reading.');
+			// }
 		},
 		/**
 		 * Gets the full record object of this model.
@@ -250,29 +296,43 @@ $JSKK.Class.create
 		 */
         set: function()
 		{
-			
-			if (this.lockState==strappy.mvc.Model.LOCK_NONE || this.isClone())
+			var	args		=$JSKK.toArray(arguments),
+				keyVals		={};
+			if (Object.isDefined(args[1]))
 			{
-				var	args		=$JSKK.toArray(arguments),
-					keyVals		={};
-				if (Object.isDefined(args[1]))
-				{
-					keyVals[args.shift()]=args.shift();
-				}
-				else
-				{
-					keyVals=args.shift();
-				}
-				for (var field in keyVals)
-				{
-					this.record[field]=keyVals[field];
-				}
-				this.flagDirty();
+				keyVals[args.shift()]=args.shift();
 			}
 			else
 			{
-				throw new Error('The model "'+this.$reflect('namespace')+'.'+this.$reflect('name')+'" is in a lock state that prevents any modification.');
+				keyVals=args.shift();
 			}
+			for (var field in keyVals)
+			{
+				this.record[field]=keyVals[field];
+			}
+			this.flagDirty();
+			// if (this.lockState==strappy.mvc.Model.LOCK_NONE || this.isClone())
+			// {
+			// 	var	args		=$JSKK.toArray(arguments),
+			// 		keyVals		={};
+			// 	if (Object.isDefined(args[1]))
+			// 	{
+			// 		keyVals[args.shift()]=args.shift();
+			// 	}
+			// 	else
+			// 	{
+			// 		keyVals=args.shift();
+			// 	}
+			// 	for (var field in keyVals)
+			// 	{
+			// 		this.record[field]=keyVals[field];
+			// 	}
+			// 	this.flagDirty();
+			// }
+			// else
+			// {
+			// 	throw new Error('The model "'+this.$reflect('namespace')+'.'+this.$reflect('name')+'" is in a lock state that prevents any modification.');
+			// }
 			if (this.lockState==strappy.mvc.Model.LOCK_NONE && !this.isClone())
 			{
 				this.fireEvent('onChange',this);

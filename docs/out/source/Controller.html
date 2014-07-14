@@ -15,8 +15,8 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js"><span id='framework-mvc-Controller'>/**
-</span> * @class framework.mvc.Controller
+  <pre class="prettyprint lang-js"><span id='strappy-mvc-Controller'>/**
+</span> * @class strappy.mvc.Controller
  * 
  * TODO:
  * 
@@ -24,30 +24,31 @@
  * 
  * Bound Signals:
  * 
- * * {@link framework.Signal.CMP_DO_RECONFIGURE}: {@link framework.mvc.Controller#onReconfigure}
- * * {@link framework.Signal.VIEW_IS_READY}: {@link framework.mvc.Controller#onViewReady}
- * * {@link framework.Signal.VIEW_DONE_GOTBASEHTML}: {@link framework.mvc.Controller#onGotBaseHTML}
- * * {@link framework.Signal.STATEFULMODEL_IS_READY}: {@link framework.mvc.Controller#onReadyState}
+ * * {@link strappy.Signal.SHOW}: {@link strappy.mvc.Controller#onSignalShow}
+ * * {@link strappy.Signal.HIDE}: {@link strappy.mvc.Controller#onSignalHide}
+ * * {@link strappy.Signal.VIEW_DONE_GOTBASEHTML}: {@link strappy.mvc.Controller#onGotBaseHTML}
+ * * {@link strappy.Signal.STATEFULMODEL_IS_READY}: {@link strappy.mvc.Controller#onReadyState}
  * 
- * @mixins framework.trait.ComponentConnector
- * @mixins framework.trait.signal.Receive
- * @mixins framework.trait.signal.Send
+ * @traits strappy.trait.ComponentConnector
+ * @traits strappy.trait.signal.Receive
+ * @traits strappy.trait.signal.Send
  * @abstract
  * 
- * @uses framework.trait.ComponentConnector
- * @uses framework.trait.signal.Receive
- * @uses framework.trait.signal.Send
+ * @uses strappy.trait.ComponentConnector
+ * @uses strappy.trait.signal.Receive
+ * @uses strappy.trait.signal.Send
  */
 $JSKK.Class.create
 (
 	{
-		$namespace:	'framework.mvc',
+		$namespace:	'strappy.mvc',
 		$name:		'Controller',
+		$abstract:	true,
 		$uses:
 		[
-			framework.trait.ComponentConnector,
-			framework.trait.signal.Receive,
-			framework.trait.signal.Send,
+			strappy.trait.ComponentConnector,
+			strappy.trait.signal.Receive,
+			strappy.trait.signal.Send,
 			$JSKK.trait.Observable
 		]
 	}
@@ -59,43 +60,73 @@ $JSKK.Class.create
 		{
 			
 		},
-<span id='framework-mvc-Controller-method-constructor'>		/**
+<span id='strappy-mvc-Controller-method-constructor'>		/**
 </span>		 * @constructor
 		 * 
 		 * Sets up the controller by binding to the above mentioned signals.
 		 */
 		init: function()
 		{
-			
+			this.registerSignals
+			( 
+				{
+					_onSignalShow:
+					{
+						signal:		strappy.Signal.SHOW,
+						type:		'strappy',
+						filter:		{iid:this.getIID()}
+					},
+					_onSignalHide:
+					{
+						signal:		strappy.Signal.HIDE,
+						type:		'strappy',
+						filter:		{iid:this.getIID()}
+					}
+				}
+			);
 		},
-<span id='framework-mvc-Controller-method-onReconfigure'>		/**
-</span>		 * This method will be called when a component fires a {@link framework.Signal.CMP_DO_RECONFIGURE Do Reconfigure}
+<span id='strappy-mvc-Controller-method-onReconfigure'>		/**
+</span>		 * This method will be called when a component fires a {@link strappy.Signal.CMP_DO_RECONFIGURE Do Reconfigure}
 		 * signal.
 		 * @abstract
-		 * @param {framework.Signal} The signal object.
+		 * @param {strappy.Signal} The signal object.
 		 */
 		onReconfigure:	$JSKK.emptyFunction,
-<span id='framework-mvc-Controller-method-onViewReady'>		/**
-</span>		 * This method will be called when a view fires a {@link framework.Signal.VIEW_IS_READY ready}
+<span id='strappy-mvc-Controller-method-onViewReady'>		/**
+</span>		 * This method will be called when a view fires a {@link strappy.Signal.VIEW_IS_READY ready}
 		 * signal.
 		 * @abstract
-		 * @param {framework.Signal} The signal object.
+		 * @param {strappy.Signal} The signal object.
 		 */
 		onViewReady:	$JSKK.emptyFunction,
-<span id='framework-mvc-Controller-method-onGotBaseHTML'>		/**
-</span>		 * This method will be called when a view fires a {@link framework.Signal.VIEW_DONE_GOTBASEHTML Got Base HTML}
+<span id='strappy-mvc-Controller-method-onGotBaseHTML'>		/**
+</span>		 * This method will be called when a view fires a {@link strappy.Signal.VIEW_DONE_GOTBASEHTML Got Base HTML}
 		 * signal.
 		 * @abstract
-		 * @param {framework.Signal} The signal object.
+		 * @param {strappy.Signal} The signal object.
 		 */
 		onGotBaseHTML: 	$JSKK.emptyFunction,
-<span id='framework-mvc-Controller-method-onReadyState'>		/**
-</span>		 * This method will be called when a state model fires a {@link framework.Signal.STATEFULMODEL_IS_READY Stateful Model is Ready}
+<span id='strappy-mvc-Controller-method-onReadyState'>		/**
+</span>		 * This method will be called when a state model fires a {@link strappy.Signal.STATEFULMODEL_IS_READY Stateful Model is Ready}
 		 * signal.
 		 * @abstract
-		 * @param {framework.Signal} The signal object.
+		 * @param {strappy.Signal} The signal object.
 		 */
-		onReadyState:	$JSKK.emptyFunction
+		onReadyState:	$JSKK.emptyFunction,
+		
+		_onSignalShow:	function()
+		{
+			var controller=this.getController('State');
+			$JSKK.when(controller.isReady.bind(controller)).isTrue(this.onSignalShow.bind(this));
+		},
+		_onSignalHide:	function()
+		{
+			var controller=this.getController('State');
+			$JSKK.when(controller.isReady.bind(controller)).isTrue(this.onSignalHide.bind(this));
+		},
+		
+		onSignalShow:	$JSKK.emptyFunction,
+		onSignalHide:	$JSKK.emptyFunction
 	}
 );</pre>
 </body>

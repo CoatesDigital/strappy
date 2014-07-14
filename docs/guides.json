@@ -1,17 +1,37 @@
 [
 	{
-		"title": "Framework Guides",
+		"title": "Strappy Guides",
 		"items":
 		[
 			{
 				"name": "GettingStarted",
-				"title": "Getting Started with Framework",
-				"description": "This introduction to Framework explains how you can get started."
+				"title": "Getting Started with Strappy",
+				"description": "This introduction to Strappy explains how you can get started."
 			},
 			{
 				"name": "HelloWorld",
 				"title": "Hello World Component",
 				"description": "A simple Hello World example."
+			},
+			{
+				"name": "ApplicationComponent",
+				"title": "Application Component",
+				"description": "A guide on developing a main application component."
+			},
+			{
+				"name": "Signals",
+				"title": "Signals",
+				"description": "A guide on signalling."
+			},
+			{
+				"name": "SharedEntities",
+				"title": "Shared Entities",
+				"description": "An explaination on whtat shared entities are and how they can be used."
+			},
+			{
+				"name": "GenericComponent",
+				"title": "Generic Component",
+				"description": "Create a generic list component."
 			},
 			{
 				"name": "StyleGuide",
@@ -22,6 +42,16 @@
 				"name": "StateHandling",
 				"title": "State Handling",
 				"description": "A guide for State Handling."
+			},
+			{
+				"name": "ComponentQueue",
+				"title": "How to use the Component Queue",
+				"description": "A guide for using the Component Queue feature of Strappy."
+			},
+			{
+				"name": "CCL_Container",
+				"title": "CCL Container",
+				"description": "A guide for using the CCL Container Component."
 			}
 		]
 	}

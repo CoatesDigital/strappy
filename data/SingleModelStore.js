@@ -17,6 +17,9 @@ $JSKK.Class.create
 (
 	{},
 	{
+		BTL:		null,
+		BTL_GET:	null,
+		BTL_SET:	null,
 		/**
 		 * @constructor
 		 * Sets up and validates the store.
@@ -26,15 +29,45 @@ $JSKK.Class.create
 		init: function()
 		{
 			this.init.$parent();
-			if (!Object.isNull(this.model) && Object.isDefined(this.model))
+			if (!this.isShared())
 			{
-				this.record=this.newRecord(this.data);
-				this.bindchangeEvent(this.record);
-				delete this.data;
+				if (!Object.isNull(this.model) && Object.isDefined(this.model))
+				{
+					this.record=this.newRecord(this.data);
+					this.bindchangeEvent(this.record);
+					delete this.data;
+				}
+				else
+				{
+					throw new Error('Store "'+this.$reflect('namespace')+'.'+this.$reflect('name')+'" must be configured with a valid model.');
+				}
+				if (!Object.isNull(this.BTL))
+				{
+					if (Object.isString(this.BTL))
+					{
+						this.BTL	=$JSKK.namespace(this.BTL);
+						this.BTL_GET=$JSKK.namespace(this.BTL_GET);
+						this.BTL_SET=$JSKK.namespace(this.BTL_SET);
+					}
+				}
 			}
 			else
 			{
-				throw new Error('Store "'+this.$reflect('namespace')+'.'+this.$reflect('name')+'" must be configured with a valid model.');
+				var	shared=this.getShared(),
+					record=shared.newRecord(this.data);
+				this.getShared().add(records);
+				this.bindchangeEvent(record);
+				//Make a reference.
+				this.record=shared.record;
+				if (!Object.isNull(shared.BTL))
+				{
+					if (Object.isString(shared.BTL))
+					{
+						shared.BTL		=$JSKK.namespace(shared.BTL);
+						shared.BTL_GET	=$JSKK.namespace(shared.BTL_GET);
+						shared.BTL_SET	=$JSKK.namespace(shared.BTL_SET);
+					}
+				}
 			}
 		},
 		/**
@@ -46,6 +79,22 @@ $JSKK.Class.create
 		get: function(field)
 		{
 			return this.record.get(field);
+		},
+		/**
+		 * 
+		 * @return {strappy.mvc.Model}
+		 */
+		getRecord: function()
+		{
+			return this.record;
+		},
+		/**
+		 * 
+		 * @return {Object}
+		 */
+		getRawRecord: function()
+		{
+			return this.record.record;
 		},
 		/**
 		 * Sets a value of a given field on the attached model.
@@ -66,37 +115,59 @@ $JSKK.Class.create
 		 * 
 		 * @return {strappy.data.SingleModelStore}
 		 */
-		sync: function()
+		sync: function(data,query)
 		{
-			if (this.proxy && Object.isFunction(this.proxy.sync))
+			var target=(this.isShared()?this.getShared():this);
+			
+			if (Object.isAssocArray(target.BTL))
+			{
+				target.BTL.startQueue();
+				if (target.isDirty())
+				{
+					target.BTL_SET([target.record]);
+				}
+				target.BTL_GET
+				(
+					data,
+					query,
+					function(response)
+					{
+						var records=response.data;
+						target.record=target.newRecord(records[0]);
+						target.fireEvent('onChange',target,records[0]);
+						target.fireEvent('onSync',target,records[0]);
+					}.bind(target)
+				);
+				target.BTL.executeQueue();
+			}
+			else if (target.proxy && Object.isFunction(target.proxy.sync))
 			{
 				var changeset=[]; 
-				if (this.isDirty())
+				if (target.isDirty())
 				{
-					changeset=[this.record];
+					changeset=[target.record];
 				}
-				this.proxy.sync
+				target.proxy.sync
 				(
 					{
 						data:		changeset,
 						onSuccess:	function(response)
 						{
-							this.record=this.newRecord(response.data[0]);
-							this.fireEvent('onChange',this,response);
-							this.fireEvent('onSync',this,response);
-						}.bind(this),
+							target.record=target.newRecord(response.data[0]);
+							target.fireEvent('onChange',target,response);
+							target.fireEvent('onSync',target,response);
+						}.bind(target),
 						onFailure: function(response)
 						{
-							this.fireEvent('onSyncFailed',this,response);
-						}.bind(this)
+							target.fireEvent('onSyncFailed',target,response);
+						}.bind(target)
 					}
 				);
 			}
 			else
 			{
-				throw new Exception('The store "'+this.$reflect('namespace')+'.'+this.$reflect('name')+'" cannot be synced as it does not have a syncable proxy attached.');
+				throw new Exception('The store "'+target.$reflect('namespace')+'.'+target.$reflect('name')+'" cannot be synced as it does not have a syncable proxy attached.');
 			}
-			return this;
 		},
 		/**
 		 * This method simply request a new model through the proxy.

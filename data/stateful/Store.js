@@ -67,14 +67,11 @@ $JSKK.Class.create
 			//Set the model.
 			this.model=strappy.mvc.stateful.Model;
 			
-			// for (var item in this.state)
-			// {
-			// 	this.keys.push(item);
-			// }
-			
-			
-			
 			this.init.$parent();
+			this.mapStateProperties();
+		},
+		mapStateProperties: function()
+		{
 			var	self=this.$reflect('self'),
 				item=null;
 			
@@ -282,6 +279,13 @@ $JSKK.Class.create
 			{
 				throw new Error('"'+lockType+'" is an invalid lock type. Valid locks are "none", "readonly" and "full".');
 			}
+			return this;
+		},
+		
+		reset: function()
+		{
+			this.set(this.data['private']);
+			this.set(this.data['public']);
 			return this;
 		}
 	}

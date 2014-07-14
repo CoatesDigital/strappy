@@ -42,18 +42,53 @@ $JSKK.Class.create
 		init: function()
 		{
 			this.init.$parent();
-			if (!Object.isNull(this.model) && Object.isDefined(this.model))
+			
+			if (!this.isShared())
 			{
-				this.records=this.newRecord(this.data);
-				for (var i=0,j=this.records.length; i<j; i++)
+				if (!Object.isNull(this.model) && Object.isDefined(this.model))
 				{
-					this.bindchangeEvent(this.records[i]);
+					this.records=this.newRecord(this.data);
+					for (var i=0,j=this.records.length; i<j; i++)
+					{
+						this.bindchangeEvent(this.records[i]);
+					}
+					delete this.data;
 				}
-				delete this.data;
+				else
+				{
+					throw new Error('Store "'+this.$reflect('namespace')+'.'+this.$reflect('name')+'" must be configured with a valid model.');
+				}
+				if (!Object.isNull(this.BTL))
+				{
+					if (Object.isString(this.BTL))
+					{
+						this.BTL	=$JSKK.namespace(this.BTL);
+						this.BTL_GET=$JSKK.namespace(this.BTL_GET);
+						this.BTL_SET=$JSKK.namespace(this.BTL_SET);
+					}
+				}
 			}
 			else
 			{
-				throw new Error('Store "'+this.$reflect('namespace')+'.'+this.$reflect('name')+'" must be configured with a valid model.');
+				var	shared	=this.getShared(),
+					records	=shared.newRecord(this.data);
+				shared.add(records);
+				for (var i=0,j=records.length; i<j; i++)
+				{
+					this.bindchangeEvent(records[i]);
+				}
+				//Make a reference.
+				this.records=shared.records;
+				
+				if (!Object.isNull(shared.BTL))
+				{
+					if (Object.isString(shared.BTL))
+					{
+						shared.BTL		=$JSKK.namespace(shared.BTL);
+						shared.BTL_GET	=$JSKK.namespace(shared.BTL_GET);
+						shared.BTL_SET	=$JSKK.namespace(shared.BTL_SET);
+					}
+				}
 			}
 		},
 		/**
@@ -128,19 +163,31 @@ $JSKK.Class.create
 		 * Note: The record will be flagged as dirty when it is added to the store.
 		 * 
 		 * @param {Mixed} record The record to be added to the store.
-		 * @return {strappy.mvc.Model}
+		 * @return {strappy.data.MultiModelStore} this
 		 */
-		add: function(record)
+		add: function(records)
 		{
-			record.flagDirty();
-			this.records.push(record);
+			if (!Object.isArray(records))
+			{
+				records=[records];
+			}
+			for (var i=0,j=records.length; i<j; i++)
+			{
+				if (!Object.isFunction(records[i].$reflect))
+				{
+					records[i]=this.newRecord(records[i])[0];
+				}
+				// records[i].flagDirty();
+				this.records.push(records[i]);
+				this.bindchangeEvent(records[i]);
+			}
 			this.fireEvent('onChange',this);
 			return this;
 		},
 		/**
 		 * Removes a record from the store.
 		 * @param {Mixed} record The record to be removed from the store.
-		 * @return {strappy.mvc.Model}
+		 * @return {strappy.data.MultiModelStore} this
 		 */
 		remove: function(record)
 		{
@@ -157,28 +204,38 @@ $JSKK.Class.create
 			return this;
 		},
 		/**
+		 * Removes all records in the store.
+		 * @return {strappy.data.MultiModelStore} this
+		 */
+		removeAll: function()
+		{
+			this.removeByRange(0,this.records.length);
+			this.fireEvent('onChange');
+			return this;
+		},
+		/**
 		 * Removes a range of records from the store.
 		 * @param {Number} start index of the range to be deleted.
 		 * @param {Number} end index of the range to be deleted.
-		 * @return {strappy.mvc.Model}
+		 * @return {strappy.data.MultiModelStore} this
 		 */
 		removeByRange: function(startIndex,endIndex)
 		{
 			if(startIndex < 0 || startIndex > this.records.length)
 			{
-				console.log("StartIndex is out of range.");
+				// console.log("StartIndex is out of range.");
 				return this;
 			}
 
 			if(endIndex < startIndex)
 			{
-				console.log("EndIndex is invalid.");
+				// console.log("EndIndex is invalid.");
 				return this;
 			}
 
 			if(endIndex > this.records.length)
 			{
-				console.log("EndIndex is out of range.");
+				// console.log("EndIndex is out of range.");
 				return this;
 			}
 			var sliced = this.records.splice(startIndex,endIndex);
@@ -234,6 +291,54 @@ $JSKK.Class.create
 		getAll: function()
 		{
 			return this.records;
+		},
+		/**
+		 * Returns the specified keys of the attached model instances (records).
+		 * 
+		 * @param  {Array} keys An array of keys to return.
+		 * @flatten {Boolean} flatten If only one key is passed, the returned array can be flattened.
+		 * @return {Array} An array of {@link strappy.mvc.Model Model} instances.
+		 */
+		getAllFiltered: function(keys,flatten)
+		{
+			if (!Object.isArray(keys))keys=[keys];
+			
+			var records=[];
+			
+			this.each
+			(
+				function(record)
+				{
+					var thisRecord={};
+					for (var i=0,j=keys.length; i<j; i++)
+					{
+						thisRecord[keys[i]]=record.get(keys[i]);
+					}
+					records.push(thisRecord);
+				}
+			);
+			if (flatten && keys.length)
+			{
+				var flattenedRecords=[];
+				for (var i=0,j=records.length; i<j; i++)
+				{
+					flattenedRecords.push(records[i][keys[0]]);
+				}
+				return flattenedRecords;
+			}
+			else
+			{
+				return records;
+			}
+		},
+		/**
+		 * Returns the total number of records in this store.
+		 * 
+		 * @return {Number} The total number of records.
+		 */
+		getCount: function()
+		{
+			return this.records.length;
 		},
 		/**
 		 * Fetches a record based on its index in the store.
@@ -436,80 +541,115 @@ $JSKK.Class.create
 		 * 
 		 * TODO: Detail this.
 		 */
-		sync: function()
+		sync: function(data,query)
 		{
-			if (this.proxy && Object.isFunction(this.proxy.sync))
+			var target=(this.isShared()?this.getShared():this);
+			
+			if (Object.isAssocArray(target.BTL))
+			{
+				var	changeset	=[];
+				target.getDirty().each
+				(
+					function(model)
+					{
+						var index=changeset.push(model.getRecord())-1;
+						// changeset[index]=target.BTL.bindType(changeset[index],model.$reflect('name').toLowerCase());
+					}.bind(target)
+				);
+				target.BTL.startQueue();
+				
+				if (changeset.length && Object.isFunction(target.BTL_SET))
+				{
+					target.BTL_SET(changeset);
+				}
+				target.BTL_GET
+				(
+					data,
+					query,
+					function(response)
+					{
+						var records=response.data;
+						target.records=target.newRecord(records);
+						this.records	=target.records;
+						for (var i=0,j=target.records.length; i<j; i++)
+						{
+							target.bindchangeEvent(target.records[i]);
+						}
+						target.fireEvent('onChange',target,records);
+						target.fireEvent('onSync',target,records);
+					}.bind(this)
+				);
+				target.BTL.executeQueue();
+			}
+			else if (target.proxy && Object.isFunction(target.proxy.sync))
 			{
 				var changeset=[];
-				this.getDirty().each
+				target.getDirty().each
 				(
 					function(model)
 					{
 						changeset.push(model.getRecord());
 					}
 				);
-				this.proxy.sync
+				target.proxy.sync
 				(
 					{
 						data:		changeset,
 						onSuccess:	function(response)
 						{
-							this.records=this.newRecord(response.data);
-							for (var i=0,j=this.records.length; i<j; i++)
+							target.records=target.newRecord(response.data);
+							this.records	=target.records;
+							for (var i=0,j=target.records.length; i<j; i++)
 							{
-								this.bindchangeEvent(this.records[i]);
+								target.bindchangeEvent(target.records[i]);
 							}
-							this.fireEvent('onChange',this,response);
-							this.fireEvent('onSync',this,response);
-						}.bind(this),
+							target.fireEvent('onChange',target,response);
+							target.fireEvent('onSync',target,response);
+						}.bind(target),
 						onFailure: function(response)
 						{
-							this.fireEvent('onSyncFailed',this,response);
+							target.fireEvent('onSyncFailed',target,response);
 						}.bind(this)
 					}
 				);
 			}
-			else if (Object.isAssocArray(this.BTL))
-			{
-				var	changeset	=[];
-				this.getDirty().each
-				(
-					function(model)
-					{
-						var index=changeset.push(model.getRecord())-1;
-						console.debug(index,changeset);
-						changeset[index]=this.BTL.bindType(changeset[index],model.$reflect('name').toLowerCase());
-					}.bind(this)
-				);
-				this.BTL.startQueue();
-				if (changeset.length)
-				{
-					this.BTL_SET(changeset);
-				}
-				this.BTL_GET
-				(
-					null,
-					function(records)
-					{
-						this.records=this.newRecord(records);
-						for (var i=0,j=this.records.length; i<j; i++)
-						{
-							this.bindchangeEvent(this.records[i]);
-						}
-						this.fireEvent('onChange',this,records);
-						this.fireEvent('onSync',this,records);
-					}.bind(this)
-				);
-				this.BTL.executeQueue();
-			}
 			else
 			{
-				throw new Error('The store "'+this.$reflect('namespace')+'.'+this.$reflect('name')+'" cannot be synced as it does not have a syncable proxy attached.');
+				throw new Error('The store "'+target.$reflect('namespace')+'.'+target.$reflect('name')+'" cannot be synced as it does not have a syncable proxy attached.');
 			}
+		},
+		/**
+		 * Flags all records in the store as being dirty. 
+		 * @return {strappy.data.MultiModelStore} this
+		 */
+		flagAllDirty: function()
+		{
+			this.each
+			(
+				function(record)
+				{
+					record.flagDirty();
+				}
+			);
+		},
+		/**
+		 * Flags all records in the store as being clean. 
+		 * @return {strappy.data.MultiModelStore} this
+		 */
+		flagAllClean: function()
+		{
+			this.each
+			(
+				function(record)
+				{
+					record.flagClean();
+				}
+			);
 		},
 		isDirty: function()
 		{
-			return Boolean(this.getDirty().length);
+			var target=(this.isShared()?this.getShared():this);
+			return Boolean(target.getDirty().length);
 		},
 		/**
 		 * Returns all the attached models which are dirty (have been modified).
@@ -518,8 +658,9 @@ $JSKK.Class.create
 		 */
 		getDirty: function()
 		{
-			var dirty=[];
-			this.records.each
+			var	target	=(this.isShared()?this.getShared():this),
+				dirty	=[];
+			target.records.each
 			(
 				function(model)
 				{

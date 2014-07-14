@@ -62,6 +62,11 @@ $JSKK.Class.create
 		 */
 		onBeforeChange:		$JSKK.Class.ABSTRACT_METHOD,
 		/**
+		 * @property {Boolean} ready A flag identifying the readyness of the controller.
+		 * @private
+		 */
+		ready:	false,
+		/**
 		 * @constructor
 		 * 
 		 * Sets up the controller by binding events and checking that a model
@@ -131,6 +136,7 @@ $JSKK.Class.create
 		setReady:		function()
 		{
 			this.stateStore.setReady(true);
+			this.ready=true;
 			if (this.fireEvent('onBeforeReadyState',this,true)!==false)
 			{
 				var state=this.getStateMgr().getState()
@@ -159,7 +165,6 @@ $JSKK.Class.create
 		 */
 		updateState:	function()
 		{
-			this.stateStore.set(key,value);
 			this.stateStore.set.apply(this.stateStore,$JSKK.toArray(arguments));
 			return this;
 		},
@@ -180,6 +185,15 @@ $JSKK.Class.create
 		getReadyViews: function()
 		{
 			return this.stateStore.getReadyViews();
+		},
+		/**
+		 * Checks to see if the store has been flagged as ready.
+		 * 
+		 * @return {Boolean} True if ready.
+		 */
+		isReady: function()
+		{
+			return this.ready;
 		}
 	}
 );

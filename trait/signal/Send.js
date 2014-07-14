@@ -28,10 +28,13 @@
 		 */
 		sendSignal: function(name,type,filter,body)
 		{
-			console.debug(this.$reflect('namespace')+'.'+this.$reflect('name'),':: sendSignal(trait) :: ',name);
+			// console.debug(this.$reflect('namespace')+'.'+this.$reflect('name'),':: sendSignal(trait) :: ',name);
 			if (!Object.isEmpty(name))
 			{
-				if (Object.isUndefined(filter))filter={};
+				if (Object.isUndefined(filter) || Object.isNull(filter))
+				{
+					filter={};
+				}
 				if (Object.isFunction(this.getIID))
 				{
 					filter.origin=this.getIID();
@@ -58,14 +61,6 @@
 			{
 				throw new Error('Class '+this.$reflect('name')+' attempted to fire an empty signal.');
 			}
-		},
-		sendLocalSignal: function()
-		{
-			
-		},
-		sendGlobalSignal: function()
-		{
-			
 		}
 	}
 );

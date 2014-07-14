@@ -81,8 +81,12 @@ $JSKK.Class.create
 )
 (
 	{
+		/**
+		 * @deprecated Use {@link strappy.InitQueue} instead.
+		 */
 		initQueue: function(queue,callback)
-		{	
+		{
+			console.warn('use of strappy.Component.initQueue is deprecated. Use strappy.InitQueue instead.');
 			var	args		=$JSKK.toArray(arguments);
 			
 			if (Object.isDefined(args[1]))
@@ -132,7 +136,6 @@ $JSKK.Class.create
 									);
 								}.bind(this,index)
 							);
-							
 						}
 						else
 						{
@@ -164,7 +167,8 @@ $JSKK.Class.create
 		 */
 		config:
 		{
-			attachTo:	null
+			attachTo:	null,
+			attachHow:	'append'
 		},
 		/**
 		 * @property browser Contains browser information.
@@ -172,7 +176,7 @@ $JSKK.Class.create
 		 * @property browser.version The version of the browser.
 		 * @readonly
 		 */
-        browser:
+		browser:
 		{
 			name:		null,
 			version:	null
@@ -329,7 +333,7 @@ $JSKK.Class.create
 		 * [_iid description]
 		 * @type {Boolean}
 		 */
-        _iid:			null,
+		_iid:			null,
 		
 		/**
 		 * @constructor
@@ -345,19 +349,19 @@ $JSKK.Class.create
 		 * 
 		 * @return {strappy.Component}
 		 */
-        init: function()
+		init: function()
 		{
 			this.my.name		=this.$reflect('name');
 			this.my.namespace	=this.$reflect('namespace').split('.');
 			
 			if (Object.isUndefined(window.strappy.$components))
-            {
+			{
 				window.strappy.$components={};
 			}
-            if (Object.isUndefined(window.strappy.$components[this.my.name]))
-            {
-            	window.strappy.$components[this.my.name]=[];
-            }
+			if (Object.isUndefined(window.strappy.$components[this.my.name]))
+			{
+				window.strappy.$components[this.my.name]=[];
+			}
 			
 			this.my.index		=window.strappy.$components[this.my.name].push(this);
 			this.my.NSObject	=window;
@@ -377,13 +381,25 @@ $JSKK.Class.create
 				function()
 				{
 					this.generateInstanceID();
+					//We wait here so that we're 100% sure that there is a containing element for views to insert into.
+					$JSKK.when
+					(
+						function()
+						{
+							return Boolean($('#'+this.getIID()).length);
+						}.bind(this)
+					).isTrue
+					(
+						function()
+						{
+							this.initChildComponents();
+							this.initStores();
+							this.initViews();
+							this.initControllers();
+							this.fireEvent('onAfterInit',this);
+						}.bind(this)
+					);
 					this.insertBaseContainer();
-					this.initChildComponents();
-					this.initStores();
-					this.initViews();
-					this.initControllers();
-					
-					this.fireEvent('onAfterInit',this);
 				}.bind(this)
 			);
 			
@@ -485,7 +501,8 @@ $JSKK.Class.create
 		{
 			var parts		=null,
 				config		=null,
-				object		=null;
+				object		=null;//,
+				// queue		=[];
 			for (var component in this.components)
 			{
 				parts		=this.components[component].split('.');
@@ -510,8 +527,10 @@ $JSKK.Class.create
 					throw new Error('Error! component "'+this.components[component]+'" not loaded.');
 					break;
 				}
+				// queue.push(object);
 				this.components[component]=new object();
 			}
+			// this.$reflect('self').initQueue(queue);
 		},
 		/**
 		 * Creates a new child component.
@@ -543,38 +562,50 @@ $JSKK.Class.create
 	);
 		 * 
 		 */
-		newChildComponent: function(component)
+		newChildComponent: function(component,name)
 		{
-			var parts		=component.split('.'),
-				object		=window[parts[0]],
-				config		=null;
-			
-			if (Object.isDefined(object))
+			var object=component;
+			if (Object.isString(component))
 			{
-				for (var i=1,j=parts.length; i<j; i++)
+				object=$JSKK.namespace(component);
+			}
+			if (Object.isDefined(object.definition))
+			{
+				if (!Object.isDefined(this.components[component]))
 				{
-					if (Object.isDefined(object[parts[i]]))
+					var cmp=new object();
+					if (Object.isUndefined(name))
 					{
-						object=object[parts[i]];
+						if (!Object.isArray(this.components[component]))
+						{
+							this.components[component]=[];
+						}
+						this.components[component].push(cmp);
 					}
 					else
 					{
-						throw new Error('Error! component "'+this.components[component]+'" not loaded.');
-						break;
+						this.components[name]=cmp;
 					}
+					return cmp;
 				}
 			}
 			else
 			{
 				throw new Error('Error! component "'+this.components[component]+'" not loaded.');
 			}
-			if (!Object.isDefined(this.components[component]))
+		},
+		newInitQueue: function(onAllReady,onItemReady)
+		{
+			var queue=new strappy.InitQueue({},this);
+			if (Object.isFunction(onAllReady))
 			{
-				this.components[component]=[];
+				queue.observe('onAllReady',onAllReady);
 			}
-			var cmp=new object();
-			this.components[component].push(cmp);
-			return cmp;
+			if (Object.isFunction(onItemReady))
+			{
+				queue.observe('onItemReady',onItemReady);
+			}
+			return queue;
 		},
 		/**
 		 * Returns a child component which is pre-defined in this
@@ -593,6 +624,7 @@ $JSKK.Class.create
 			}
 			else
 			{
+				console.trace();
 				throw new Error('Unable to get component "'+cmpName+'". This component has not been registered.');
 			}
 		},
@@ -726,6 +758,18 @@ $JSKK.Class.create
 			}
 		},
 		/**
+		 * Attaches a shared store to the component as a locally referenced and used store.
+		 * 
+		 * @param  {string} localRef The local name of the store. Eg "MyStore".
+		 * @param  {string} sharedRef The shared full namespace of the store. Eg "Project.shared.store.MyStore".
+		 * @return {strappy.Component} this
+		 */
+		attachSharedStore: function(localRef,sharedRef)
+		{
+			this._stores[localRef]=$JSKK.namespace(sharedRef);
+			return this;
+		},
+		/**
 		 * Returns an associated store which is pre-defined in this
 		 * components "models" property.
 		 * 
@@ -746,16 +790,16 @@ $JSKK.Class.create
 		},
 		insertBaseContainer: function()
 		{
-			$(this.getConfig('attachTo') || 'body')[this.getConfig('attachHow') || 'append']
-			(
-				[
-					'<div',
-					' class="'+this.$reflect('namespace').replace(/\./g,'-')+'-'+this.$reflect('name')+'-container"',
-					' id="'+this.getIID()+'"',
-					' style="display:none;">',
-					'</div>'
-				].join('')
-			);
+			var container=
+			$([
+				'<div',
+				' class="'+this.$reflect('namespace').replace(/\./g,'-')+'-'+this.$reflect('name')+'-container"',
+				' id="'+this.getIID()+'"',
+				' style="display:none;">',
+				'</div>'
+			].join(''));
+			container.data('component',this);
+			$(this.getConfig('attachTo') || 'body')[this.getConfig('attachHow') || 'append'](container);
 			
 		},
 		generateInstanceID: function()
@@ -836,20 +880,24 @@ $JSKK.Class.create
 		 */
 		getConfig:		function(key)
 		{
-			var	parts	=key.split('.'),
-				object	=this.config;
-			for (var i=0,j=parts.length; i<j; i++)
+			if (Object.isDefined(key))
 			{
-				if (Object.isDefined(object[parts[i]]))
+				var	parts	=key.split('.'),
+					object	=this.config;
+				for (var i=0,j=parts.length; i<j; i++)
 				{
-					object=object[parts[i]];
+					if (Object.isDefined(object[parts[i]]))
+					{
+						object=object[parts[i]];
+					}
+					else
+					{
+						return null;
+					}
 				}
-				else
-				{
-					return null;
-				}
+				return object;
 			}
-			return object;
+			return this.config;
 		},
 		/**
 		 * Calculates the ID of this component based off of

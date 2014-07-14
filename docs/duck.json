@@ -1,6 +1,6 @@
 {
 	"--output":				"./out/",
-    "--title":				"Framework Docs",
+    "--title":				"Strappy Docs",
     "--welcome":			"index.html",
     "--warnings":			["-link", "-no_doc"],
     "--examples-base-url":	"../examples/",
@@ -17,7 +17,10 @@
         "../Component.js",
         "../RadioTower.js",
         "../StateMgr.js",
+        "../InitQueue.js",
         "../Signal.js",
+        "../SharedState.js",
+        "../ShareMgr.js",
         "../trait/ComponentConnector.js",
         "../trait/signal/Send.js",
         "../trait/signal/Receive.js",

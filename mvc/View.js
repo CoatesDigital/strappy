@@ -96,7 +96,7 @@ $JSKK.Class.create
 			
 			for (var template in this.templates)
 			{
-				var requestPath	=(this.$reflect('namespace').replace(/\./g,'/'))+'/html/'+this.templates[template];
+				var requestPath	=('/' + this.$reflect('namespace').replace(/\./g,'/'))+'/html/'+this.templates[template];
 				if (!this.getViewCache().exists(requestPath)
 				|| this.getViewCache().isFetching(requestPath))
 				{
@@ -217,6 +217,7 @@ $JSKK.Class.create
 //			console.debug('onShow');
 			// this.getContainer().fadeIn(500);
 			this.getContainer().show();
+			this.getContainer().removeClass('hidden');
 			this.fireEvent('onShow',this);
 			return this;
 		},
@@ -227,6 +228,7 @@ $JSKK.Class.create
 		{
 //			console.debug('onHide');
 			// this.getContainer().fadeOut(500);
+			this.getContainer().addClass('hidden');
 			this.getContainer().hide();
 			this.fireEvent('onHide',this);
 			return this;
@@ -303,6 +305,10 @@ $JSKK.Class.create
 			}
 			$('body').on(event,selector,data,handle[method].bind(handle));
 			return this;
+		},
+		find: function(selector)
+		{
+			return this.getContainer().find(selector);
 		}
 //		bindStoreChange: function(store,bindings)
 //		{
