@@ -47,6 +47,35 @@ $JSKK.Class.create
 					{
 						console.warn('BTL Proxies raw() method hasn\'t been confiugred to deal with failures.');
 //						config.onComplete();
+						$application.getController('Dialogue').showDialogue
+						(
+							{
+								title:		'',
+								width:		488,
+								height:		276,
+								buttons:
+								[
+									{
+										text:		'OK',
+										cls:		'highlighted',
+										handler:	function()
+										{
+											$application.getController('Dialogue').hideDialogue();
+										}.bind(this)
+									}
+								],
+								template:	'Message',
+								keyVals:
+								{
+									message1:	'PROBLEMS!',
+									message2:	''
+								}
+							},
+							function(modal) 
+							{
+
+							}.bind(this)
+						);
 					}
 				);
 			}
